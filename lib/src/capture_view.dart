@@ -42,7 +42,7 @@ class CaptureView extends StatefulWidget {
 }
 
 class _CaptureViewState extends State<CaptureView> {
-  late CameraController controller;
+  CameraController? controller;
   late List<CameraDescription> cameras;
 
   @override
@@ -59,7 +59,7 @@ class _CaptureViewState extends State<CaptureView> {
       }
 
       // Initialize the camera controller and update the UI after initialization.
-      controller.initialize().then((_) {
+      controller?.initialize().then((_) {
         if (!mounted) {
           return;
         }
@@ -86,20 +86,20 @@ class _CaptureViewState extends State<CaptureView> {
   @override
   void dispose() {
     // Dispose of the camera controller to release resources.
-    controller.dispose();
+    controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: controller.value.isInitialized
+      body: (controller != null && controller!.value.isInitialized)
           ? Stack(
               alignment: Alignment.bottomCenter,
               fit: StackFit.expand,
               children: [
                 // Live camera preview.
-                CameraPreview(controller),
+                CameraPreview(controller!),
                 // Framing guides around the capture area.
                 FramingCaptureWidget(
                   hideIdWidget: widget.hideIdWidget ?? false,
@@ -167,7 +167,7 @@ class _CaptureViewState extends State<CaptureView> {
                       color: Colors.white,
                       onPressed: () async {
                         // Capture an image.
-                        XFile file = await controller.takePicture();
+                        XFile file = await controller!.takePicture();
 
                         // Crop the captured image.
                         File? croppedImage = await CaptureController.cropImage(
