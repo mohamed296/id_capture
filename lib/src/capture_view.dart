@@ -176,8 +176,9 @@ class _CaptureViewState extends State<CaptureView> {
                   // Callback to handle the cropped image.
                   widget.fileCallback(croppedImage!);
 
-                  // Close the capture screen and callback to handle the cropped image..
-                  Navigator.pop(context, croppedImage);
+                  if (context.mounted) {
+                    Navigator.pop(context, croppedImage);
+                  } // Close the capture screen and callback to handle the cropped image..
                 },
                 icon: const Icon(
                   Icons.camera,
