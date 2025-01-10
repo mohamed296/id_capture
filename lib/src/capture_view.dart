@@ -42,7 +42,7 @@ class CaptureView extends StatefulWidget {
 }
 
 class _CaptureViewState extends State<CaptureView> {
-  late CameraController controller;
+  CameraController? controller;
   late List<CameraDescription> cameras;
 
   @override
@@ -59,7 +59,7 @@ class _CaptureViewState extends State<CaptureView> {
       }
 
       // Initialize the camera controller and update the UI after initialization.
-      controller.initialize().then((_) {
+      controller?.initialize().then((_) {
         if (!mounted) {
           return;
         }
@@ -86,108 +86,116 @@ class _CaptureViewState extends State<CaptureView> {
   @override
   void dispose() {
     // Dispose of the camera controller to release resources.
-    controller.dispose();
+    controller?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        alignment: Alignment.bottomCenter,
-        fit: StackFit.expand,
-        children: [
-          // Live camera preview.
-          CameraPreview(controller),
-          // Framing guides around the capture area.
-          FramingCaptureWidget(
-            hideIdWidget: widget.hideIdWidget ?? false,
-          ),
-          // UI at the top of the capture screen.
-          Align(
-            alignment: Alignment.topLeft,
-            child: Container(
-              margin: const EdgeInsets.only(
-                top: 10,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  // Back button.
-                  IconButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(
-                      Icons.arrow_back,
-                      color: Colors.white,
-                    ),
-                  ),
-                  // Title at the top of the screen.
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: Text(
-                      widget.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  // Additional information or instructions.
-                  if (widget.info != null)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                      ),
-                      child: Text(
-                        widget.info!,
-                        style: const TextStyle(color: Colors.white),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-          // Capture button at the bottom center.
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.black12,
-                shape: BoxShape.circle,
-              ),
-              margin: const EdgeInsets.all(25),
-              child: IconButton(
-                enableFeedback: true,
-                color: Colors.white,
-                onPressed: () async {
-                  // Capture an image.
-                  XFile file = await controller.takePicture();
-
-                  // Crop the captured image.
-                  File? croppedImage = await CaptureController.cropImage(
-                    File(file.path),
-                  );
-
-                  // Callback to handle the cropped image.
-                  widget.fileCallback(croppedImage!);
-
-                  // Close the capture screen and callback to handle the cropped image..
-                  Navigator.pop(context, croppedImage);
-                },
-                icon: const Icon(
-                  Icons.camera,
+      body: (controller != null && controller!.value.isInitialized)
+          ? Stack(
+              alignment: Alignment.bottomCenter,
+              fit: StackFit.expand,
+              children: [
+                // Live camera preview.
+                CameraPreview(controller!),
+                // Framing guides around the capture area.
+                FramingCaptureWidget(
+                  hideIdWidget: widget.hideIdWidget ?? false,
                 ),
-                iconSize: 72,
+                // UI at the top of the capture screen.
+                Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    margin: const EdgeInsets.only(
+                      top: 10,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        // Back button.
+                        IconButton(
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                          ),
+                        ),
+                        // Title at the top of the screen.
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          child: Text(
+                            widget.title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                        // Additional information or instructions.
+                        if (widget.info != null)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                            ),
+                            child: Text(
+                              widget.info!,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                // Capture button at the bottom center.
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black12,
+                      shape: BoxShape.circle,
+                    ),
+                    margin: const EdgeInsets.all(25),
+                    child: IconButton(
+                      enableFeedback: true,
+                      color: Colors.white,
+                      onPressed: () async {
+                        // Capture an image.
+                        XFile file = await controller!.takePicture();
+
+                        // Crop the captured image.
+                        File? croppedImage = await CaptureController.cropImage(
+                          File(file.path),
+                        );
+
+                        // Callback to handle the cropped image.
+                        widget.fileCallback(croppedImage!);
+
+                        if (context.mounted) {
+                          Navigator.pop(context, croppedImage);
+                        } // Close the capture screen and callback to handle the cropped image..
+                      },
+                      icon: const Icon(
+                        Icons.camera,
+                      ),
+                      iconSize: 72,
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : const Center(
+              child: SizedBox.square(
+                dimension: 25,
+                child: CircularProgressIndicator.adaptive(),
               ),
             ),
-          ),
-        ],
-      ),
     );
   }
 }
